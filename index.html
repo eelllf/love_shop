@@ -79,7 +79,8 @@
                 İpucu: Aşk yolunun başlangıç tarihi... 💖
             </p>
             
-            <input type="text" id="secret-date-input" class="w-full p-4 border-2 border-pink-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 mb-4 text-center bg-white bg-opacity-80 text-lg tracking-widest font-semibold text-pink-600" placeholder="GG/AA/YYYY">
+            <!-- DİKKAT: autocomplete="off" eklendi, artık tarih hafızada kalmayacak -->
+            <input type="text" id="secret-date-input" autocomplete="off" class="w-full p-4 border-2 border-pink-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 mb-4 text-center bg-white bg-opacity-80 text-lg tracking-widest font-semibold text-pink-600" placeholder="GG/AA/YYYY">
             
             <button onclick="checkDate()" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 rounded-xl transition shadow-lg text-lg relative z-10">
                 Kilidi Aç
@@ -276,7 +277,6 @@
             }());
         };
 
-        // YENİ: RESİM AÇILINCA BELİREN E ❤️ L EFEKTİ
         window.showLoveInitials = () => {
             const container = document.createElement('div');
             container.className = 'fixed inset-0 z-[100] flex items-center justify-center pointer-events-none';
@@ -288,7 +288,6 @@
                 </div>
             `;
             document.body.appendChild(container);
-            // 3.5 Saniye sonra ekrandan silinir
             setTimeout(() => { container.remove(); }, 3500);
         };
 
@@ -422,7 +421,6 @@
                     if(type === 'note') {
                         resultDiv.innerHTML = `<div class="mt-4 p-4 bg-white bg-opacity-70 border-l-4 border-pink-500 rounded-lg text-pink-900 break-words whitespace-pre-wrap font-medium">${originalData}</div>`;
                     } else {
-                        // RESİM İSE E ❤️ L ANİMASYONUNU ÇALIŞTIR
                         showLoveInitials();
                         resultDiv.innerHTML = `<img src="${originalData}" class="mt-4 w-full h-auto rounded-lg shadow-md border-2 border-pink-300">`;
                     }

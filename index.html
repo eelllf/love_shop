@@ -54,7 +54,7 @@
 </head>
 <body class="min-h-screen text-gray-800 pb-10 relative">
 
-    <!-- ARKA PLAN UÇUŞAN KALPLER (Tıklamaları engellemez) -->
+    <!-- ARKA PLAN UÇUŞAN KALPLER -->
     <div id="hearts-bg" class="fixed inset-0 pointer-events-none z-0 overflow-hidden"></div>
 
     <!-- 1. GİRİŞ (KİLİT) EKRANI -->
@@ -86,7 +86,7 @@
 
         <div class="max-w-3xl mx-auto px-4">
             
-            <!-- YENİ: AŞK SAYACI (Zaman Tüneli) -->
+            <!-- AŞK SAYACI (Zaman Tüneli) -->
             <div class="glass-panel p-4 mb-8 mx-auto max-w-md text-center border-2 border-pink-300">
                 <h3 class="text-pink-700 font-bold mb-3 text-sm tracking-wide">BİRLİKTE GEÇEN ZAMANIMIZ</h3>
                 <div class="flex justify-center gap-4 text-pink-600">
@@ -182,7 +182,6 @@
             const heart = document.createElement('div');
             heart.classList.add('heart-particle');
             
-            // Rastgele şekiller, boyutlar ve hızlar
             const shapes = ['💖', '✨', '💕', '🤍'];
             heart.innerText = shapes[Math.floor(Math.random() * shapes.length)];
             heart.style.left = Math.random() * 100 + 'vw';
@@ -192,12 +191,11 @@
             container.appendChild(heart);
             setTimeout(() => { heart.remove(); }, 10000);
         }
-        setInterval(createHeart, 600); // Her saniyeden kısa sürede bir kalp fırlat
+        setInterval(createHeart, 600); 
 
-        // --- AŞK SAYACI (CANLI ZAMAN TÜNELİ) ---
+        // --- AŞK SAYACI ---
         let counterInterval = null;
         function startLoveCounter() {
-            // BAŞLANGIÇ TARİHİ: 23 Ağustos 2026 Saat 00:00
             const startDate = new Date("2026-08-23T00:00:00").getTime();
             
             counterInterval = setInterval(() => {
@@ -226,7 +224,7 @@
                 document.getElementById('entrance-screen').classList.add('hidden-element');
                 document.getElementById('main-content').classList.remove('hidden-element');
                 triggerMassiveHeartConfetti(); 
-                startLoveCounter(); // İçeri girince sayacı çalıştır
+                startLoveCounter(); 
             } else {
                 document.getElementById('entrance-error').classList.remove('hidden-element');
             }
@@ -277,7 +275,7 @@
                     document.getElementById('admin-note-panel').classList.remove('hidden-element');
                     document.getElementById('admin-image-panel').classList.remove('hidden-element');
                     alert("Hoş geldin, paneller açıldı! 💖");
-                    loadDataFromFirebase(); // Admin silme ikonlarını eklemek için yenile
+                    loadDataFromFirebase();
                 } else {
                     alert("Yanlış şifre!");
                 }
@@ -307,24 +305,57 @@
             }
         };
 
-        // --- GİZLİ VERİ KAYDETME ---
+        // --- YENİ: OTOMATİK FOTOĞRAF SIKIŞTIRMA VE KAYDETME ---
         window.saveData = async (type) => {
             const hint = document.getElementById(`${type}-hint`).value;
             const password = document.getElementById(`${type}-password`).value;
-            let rawData = "";
 
             if(!hint || !password) return alert("Lütfen ipucu ve şifreyi gir!");
 
             if(type === 'note') {
-                rawData = document.getElementById('note-content').value;
+                const rawData = document.getElementById('note-content').value;
                 if(!rawData) return alert("Lütfen bir not yaz!");
                 processAndUpload(type, rawData, hint, password);
             } else {
                 const fileInput = document.getElementById('image-file');
-                if(!fileInput.files[0]) return alert("Lütfen resim seç!");
+                const file = fileInput.files[0];
+                if(!file) return alert("Lütfen resim seç!");
+
+                // Çok büyük fotoğrafları yükleyebilmek için Canvas ile SIKIŞTIRMA işlemi
                 const reader = new FileReader();
-                reader.onload = (e) => processAndUpload(type, e.target.result, hint, password);
-                reader.readAsDataURL(fileInput.files[0]);
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 800; // Genişliği düşürerek yer kazanıyoruz
+                        const MAX_HEIGHT = 800;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > MAX_WIDTH) {
+                                height *= MAX_WIDTH / width;
+                                width = MAX_WIDTH;
+                            }
+                        } else {
+                            if (height > MAX_HEIGHT) {
+                                width *= MAX_HEIGHT / height;
+                                height = MAX_HEIGHT;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        // Kaliteyi %70'e düşür (Gözle fark edilmez ama boyutu çok küçültür)
+                        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                        processAndUpload(type, compressedDataUrl, hint, password);
+                    }
+                    img.src = event.target.result;
+                }
+                reader.readAsDataURL(file);
             }
         };
 
@@ -343,7 +374,8 @@
                 if(type==='note') document.getElementById('note-content').value = '';
                 if(type==='image') document.getElementById('image-file').value = '';
             } catch (e) {
-                alert("Yükleme başarısız oldu.");
+                console.error(e);
+                alert("Yükleme başarısız oldu: Lütfen internetini kontrol et.");
             }
         }
 

@@ -14,12 +14,14 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
         
-        /* Hareketli ve Romantik Arka Plan Animasyonu */
+        /* ÇOK DAHA BELİRGİN ve HIZLI Arka Plan Animasyonu */
         body { 
             font-family: 'Poppins', sans-serif; 
-            background: linear-gradient(-45deg, #fff0f5, #ffe4e1, #ffd1dc, #fff5f5);
+            /* Daha canlı pembe ve lila tonları eklendi */
+            background: linear-gradient(-45deg, #ff9a9e, #fecfef, #fbc2eb, #a18cd1);
             background-size: 400% 400%;
-            animation: romantikGecis 15s ease infinite;
+            /* Hareket hemen fark edilsin diye 5 saniyeye düşürüldü */
+            animation: romantikGecis 5s ease infinite;
         }
 
         @keyframes romantikGecis {
@@ -40,7 +42,7 @@
         .hidden-element { display: none; }
     </style>
 </head>
-<!-- DİKKAT: Buradan bg-pink-50 kodunu sildim ki animasyonumuz çalışsın -->
+<!-- DİKKAT: bg-pink-50 kodu silindi, artık sadece animasyon çalışacak -->
 <body class="min-h-screen text-gray-800 pb-10">
 
     <!-- Üst Başlık -->
@@ -70,7 +72,7 @@
                 </button>
             </div>
             <div id="notes-list" class="space-y-4">
-                <p class="text-center text-pink-400 animate-pulse">Buluttan anılar yükleniyor...</p>
+                <p class="text-center text-pink-500 font-medium animate-pulse">Buluttan anılar yükleniyor...</p>
             </div>
         </div>
 
@@ -141,7 +143,7 @@
             if(clickCount === 3) {
                 const pwd = prompt("Admin Şifresini Girin:");
                 
-                // ŞİFRE "efsunlu" OLARAK AYARLI
+                // ŞİFRE BURADA
                 if(pwd === "efsunlu") { 
                     isAdmin = true;
                     document.getElementById('admin-note-panel').classList.remove('hidden-element');

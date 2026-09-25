@@ -14,13 +14,10 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
         
-        /* ÇOK DAHA BELİRGİN ve HIZLI Arka Plan Animasyonu */
         body { 
             font-family: 'Poppins', sans-serif; 
-            /* Daha canlı pembe ve lila tonları eklendi */
             background: linear-gradient(-45deg, #ff9a9e, #fecfef, #fbc2eb, #a18cd1);
             background-size: 400% 400%;
-            /* Hareket hemen fark edilsin diye 5 saniyeye düşürüldü */
             animation: romantikGecis 5s ease infinite;
         }
 
@@ -30,7 +27,6 @@
             100% { background-position: 0% 50%; }
         }
 
-        /* Daha Şık Bir Buzlu Cam (Glassmorphism) Efekti */
         .glass-panel {
             background: rgba(255, 255, 255, 0.45);
             backdrop-filter: blur(12px);
@@ -39,57 +35,96 @@
             box-shadow: 0 8px 32px 0 rgba(255, 180, 200, 0.3);
             border-radius: 1rem;
         }
-        .hidden-element { display: none; }
+        .hidden-element { display: none !important; }
     </style>
 </head>
-<!-- DİKKAT: bg-pink-50 kodu silindi, artık sadece animasyon çalışacak -->
 <body class="min-h-screen text-gray-800 pb-10">
 
-    <!-- Üst Başlık -->
-    <header class="bg-pink-400 text-white shadow-md p-5 text-center rounded-b-3xl mb-8">
-        <h1 class="text-4xl font-bold tracking-wider cursor-pointer hover:scale-105 transition transform inline-block" onclick="triggerAdminLogin()">💖 Love Shop 💖</h1>
-        <p class="text-pink-100 text-sm mt-2">Sadece ikimize özel gizli anılarımız</p>
-    </header>
-
-    <div class="max-w-3xl mx-auto px-4">
-        <!-- Sekmeler -->
-        <div class="flex justify-center space-x-4 mb-6">
-            <button id="btn-notes" class="px-6 py-2 bg-pink-500 text-white rounded-full font-semibold shadow-lg hover:bg-pink-600 transition" onclick="switchTab('notes')">📝 Notlar</button>
-            <button id="btn-images" class="px-6 py-2 bg-pink-200 text-pink-700 rounded-full font-semibold shadow-lg hover:bg-pink-300 transition" onclick="switchTab('images')">📸 Resimler</button>
+    <!-- 1. GİRİŞ (KİLİT) EKRANI -->
+    <div id="entrance-screen" class="fixed inset-0 z-50 flex items-center justify-center px-4">
+        <div class="glass-panel p-8 text-center max-w-sm w-full relative shadow-2xl">
+            <div class="text-6xl mb-4 animate-bounce">🔐</div>
+            <h2 class="text-2xl font-bold text-pink-700 mb-2">Gizli Kutu</h2>
+            
+            <p class="text-gray-800 mb-6 font-semibold text-sm bg-white bg-opacity-60 p-3 rounded-lg border border-pink-200 shadow-sm">
+                İpucu: Aşk yolunun başlangıç tarihi... 💖
+            </p>
+            
+            <input type="text" id="secret-date-input" class="w-full p-4 border-2 border-pink-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 mb-4 text-center bg-white bg-opacity-80 text-lg tracking-widest font-semibold text-pink-600" placeholder="GG/AA/YYYY">
+            
+            <button onclick="checkDate()" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 rounded-xl transition shadow-lg text-lg">
+                Kilidi Aç
+            </button>
+            <p id="entrance-error" class="text-red-600 font-semibold text-sm mt-3 hidden-element">❌ Tarih yanlış, lütfen tekrar düşün...</p>
         </div>
+    </div>
 
-        <!-- NOTLAR BÖLÜMÜ -->
-        <div id="tab-notes">
-            <div id="admin-note-panel" class="glass-panel p-6 mb-8 hidden-element border-2 border-pink-400">
-                <h2 class="text-xl font-semibold text-pink-600 mb-4">✨ YENİ GİZLİ NOT EKLE (ADMİN)</h2>
-                <textarea id="note-content" class="w-full p-3 border border-pink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400 mb-3 bg-white bg-opacity-70" rows="3" placeholder="Buraya gizli bir mesaj yaz..."></textarea>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                    <input type="text" id="note-hint" class="w-full p-3 border border-pink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400 bg-white bg-opacity-70" placeholder="İpucu">
-                    <input type="password" id="note-password" class="w-full p-3 border border-pink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400 bg-white bg-opacity-70" placeholder="Şifre belirle">
-                </div>
-                <button onclick="saveData('note')" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-semibold py-3 rounded-xl transition shadow-md">
-                    🔒 Şifrele ve Buluta Kaydet
-                </button>
-            </div>
-            <div id="notes-list" class="space-y-4">
-                <p class="text-center text-pink-500 font-medium animate-pulse">Buluttan anılar yükleniyor...</p>
-            </div>
-        </div>
+    <!-- 2. ANA SİTE -->
+    <div id="main-content" class="hidden-element">
+        <!-- Üst Başlık -->
+        <header class="bg-pink-400 text-white shadow-md p-5 text-center rounded-b-3xl mb-8">
+            <h1 class="text-4xl font-bold tracking-wider cursor-pointer hover:scale-105 transition transform inline-block" onclick="triggerAdminLogin()">💖 Love Shop 💖</h1>
+            <p class="text-pink-100 text-sm mt-2">Sadece ikimize özel gizli anılarımız</p>
+        </header>
 
-        <!-- RESİMLER BÖLÜMÜ -->
-        <div id="tab-images" class="hidden-element">
-            <div id="admin-image-panel" class="glass-panel p-6 mb-8 hidden-element border-2 border-pink-400">
-                <h2 class="text-xl font-semibold text-pink-600 mb-4">✨ YENİ GİZLİ RESİM EKLE (ADMİN)</h2>
-                <input type="file" id="image-file" accept="image/*" class="w-full p-3 border border-pink-200 rounded-xl bg-white bg-opacity-70 mb-3">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                    <input type="text" id="image-hint" class="w-full p-3 border border-pink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400 bg-white bg-opacity-70" placeholder="İpucu">
-                    <input type="password" id="image-password" class="w-full p-3 border border-pink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400 bg-white bg-opacity-70" placeholder="Şifre belirle">
-                </div>
-                <button onclick="saveData('image')" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-semibold py-3 rounded-xl transition shadow-md">
-                    🔒 Şifrele ve Buluta Kaydet
-                </button>
+        <div class="max-w-3xl mx-auto px-4">
+            <!-- 3'LÜ SEKMELER -->
+            <div class="flex justify-center space-x-2 md:space-x-4 mb-6">
+                <button id="btn-notes" class="px-4 md:px-6 py-2 bg-pink-500 text-white rounded-full font-semibold shadow-lg hover:bg-pink-600 transition" onclick="switchTab('notes')">📝 Notlar</button>
+                <button id="btn-images" class="px-4 md:px-6 py-2 bg-pink-200 text-pink-700 rounded-full font-semibold shadow-lg hover:bg-pink-300 transition" onclick="switchTab('images')">📸 Resimler</button>
+                <button id="btn-songs" class="px-4 md:px-6 py-2 bg-pink-200 text-pink-700 rounded-full font-semibold shadow-lg hover:bg-pink-300 transition" onclick="switchTab('songs')">🎵 Şarkılar</button>
             </div>
-            <div id="images-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+
+            <!-- NOTLAR BÖLÜMÜ -->
+            <div id="tab-notes">
+                <div id="admin-note-panel" class="glass-panel p-6 mb-8 hidden-element border-2 border-pink-400">
+                    <h2 class="text-xl font-semibold text-pink-600 mb-4">✨ YENİ GİZLİ NOT EKLE (ADMİN)</h2>
+                    <textarea id="note-content" class="w-full p-3 border border-pink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400 mb-3 bg-white bg-opacity-70" rows="3" placeholder="Buraya gizli bir mesaj yaz..."></textarea>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                        <input type="text" id="note-hint" class="w-full p-3 border border-pink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400 bg-white bg-opacity-70" placeholder="İpucu">
+                        <input type="password" id="note-password" class="w-full p-3 border border-pink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400 bg-white bg-opacity-70" placeholder="Şifre belirle">
+                    </div>
+                    <button onclick="saveData('note')" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-semibold py-3 rounded-xl transition shadow-md">
+                        🔒 Şifrele ve Buluta Kaydet
+                    </button>
+                </div>
+                <div id="notes-list" class="space-y-4">
+                    <p class="text-center text-pink-500 font-medium animate-pulse">Buluttan anılar yükleniyor...</p>
+                </div>
+            </div>
+
+            <!-- RESİMLER BÖLÜMÜ -->
+            <div id="tab-images" class="hidden-element">
+                <div id="admin-image-panel" class="glass-panel p-6 mb-8 hidden-element border-2 border-pink-400">
+                    <h2 class="text-xl font-semibold text-pink-600 mb-4">✨ YENİ GİZLİ RESİM EKLE (ADMİN)</h2>
+                    <input type="file" id="image-file" accept="image/*" class="w-full p-3 border border-pink-200 rounded-xl bg-white bg-opacity-70 mb-3">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                        <input type="text" id="image-hint" class="w-full p-3 border border-pink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400 bg-white bg-opacity-70" placeholder="İpucu">
+                        <input type="password" id="image-password" class="w-full p-3 border border-pink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400 bg-white bg-opacity-70" placeholder="Şifre belirle">
+                    </div>
+                    <button onclick="saveData('image')" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-semibold py-3 rounded-xl transition shadow-md">
+                        🔒 Şifrele ve Buluta Kaydet
+                    </button>
+                </div>
+                <div id="images-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+
+            <!-- ŞARKILAR BÖLÜMÜ -->
+            <div id="tab-songs" class="hidden-element">
+                <div class="glass-panel p-6 mb-8 border-2 border-pink-300">
+                    <h2 class="text-xl font-semibold text-pink-600 mb-4">🎶 Bize Bir Şarkı Armağan Et</h2>
+                    <p class="text-sm text-gray-600 mb-4">Aklına gelen bir şarkının adını yaz veya YouTube/Spotify linkini yapıştır.</p>
+                    
+                    <input type="text" id="song-name" class="w-full p-3 border border-pink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400 mb-3 bg-white bg-opacity-70" placeholder="Şarkı Adı veya Linki">
+                    <input type="text" id="song-sender" class="w-full p-3 border border-pink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400 mb-4 bg-white bg-opacity-70" placeholder="Senin Adın (Örn: Emine)">
+                    
+                    <button onclick="savePublicSong()" class="w-full bg-pink-400 hover:bg-pink-500 text-white font-semibold py-3 rounded-xl transition shadow-md">
+                        🎵 Şarkıyı Listeye Ekle
+                    </button>
+                </div>
+                
+                <div id="songs-list" class="space-y-4"></div>
+            </div>
         </div>
     </div>
 
@@ -109,18 +144,38 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // --- GİRİŞ KONTROLÜ ---
+        window.checkDate = () => {
+            const userInput = document.getElementById('secret-date-input').value.trim();
+            const correctDate = "23/08/2026"; 
+            if(userInput === correctDate) {
+                document.getElementById('entrance-screen').classList.add('hidden-element');
+                document.getElementById('main-content').classList.remove('hidden-element');
+                triggerMassiveHeartConfetti(); 
+            } else {
+                document.getElementById('entrance-error').classList.remove('hidden-element');
+            }
+        };
+
+        // --- SEKME DEĞİŞTİRİCİ ---
         window.switchTab = (tabName) => {
             document.getElementById('tab-notes').classList.add('hidden-element');
             document.getElementById('tab-images').classList.add('hidden-element');
-            document.getElementById('btn-notes').className = "px-6 py-2 bg-pink-200 text-pink-700 rounded-full font-semibold shadow-lg hover:bg-pink-300 transition";
-            document.getElementById('btn-images').className = "px-6 py-2 bg-pink-200 text-pink-700 rounded-full font-semibold shadow-lg hover:bg-pink-300 transition";
+            document.getElementById('tab-songs').classList.add('hidden-element');
+            
+            document.getElementById('btn-notes').className = "px-4 md:px-6 py-2 bg-pink-200 text-pink-700 rounded-full font-semibold shadow-lg hover:bg-pink-300 transition";
+            document.getElementById('btn-images').className = "px-4 md:px-6 py-2 bg-pink-200 text-pink-700 rounded-full font-semibold shadow-lg hover:bg-pink-300 transition";
+            document.getElementById('btn-songs').className = "px-4 md:px-6 py-2 bg-pink-200 text-pink-700 rounded-full font-semibold shadow-lg hover:bg-pink-300 transition";
 
             if(tabName === 'notes') {
                 document.getElementById('tab-notes').classList.remove('hidden-element');
-                document.getElementById('btn-notes').className = "px-6 py-2 bg-pink-500 text-white rounded-full font-semibold shadow-lg hover:bg-pink-600 transition";
-            } else {
+                document.getElementById('btn-notes').className = "px-4 md:px-6 py-2 bg-pink-500 text-white rounded-full font-semibold shadow-lg hover:bg-pink-600 transition";
+            } else if (tabName === 'images') {
                 document.getElementById('tab-images').classList.remove('hidden-element');
-                document.getElementById('btn-images').className = "px-6 py-2 bg-pink-500 text-white rounded-full font-semibold shadow-lg hover:bg-pink-600 transition";
+                document.getElementById('btn-images').className = "px-4 md:px-6 py-2 bg-pink-500 text-white rounded-full font-semibold shadow-lg hover:bg-pink-600 transition";
+            } else {
+                document.getElementById('tab-songs').classList.remove('hidden-element');
+                document.getElementById('btn-songs').className = "px-4 md:px-6 py-2 bg-pink-500 text-white rounded-full font-semibold shadow-lg hover:bg-pink-600 transition";
             }
         };
 
@@ -142,8 +197,6 @@
             clickCount++;
             if(clickCount === 3) {
                 const pwd = prompt("Admin Şifresini Girin:");
-                
-                // ŞİFRE BURADA
                 if(pwd === "efsunlu") { 
                     isAdmin = true;
                     document.getElementById('admin-note-panel').classList.remove('hidden-element');
@@ -157,6 +210,29 @@
             }
         };
 
+        // --- ŞARKI KAYDETME ---
+        window.savePublicSong = async () => {
+            const songName = document.getElementById('song-name').value.trim();
+            const sender = document.getElementById('song-sender').value.trim() || "Biri";
+
+            if(!songName) return alert("Lütfen şarkı adını veya linkini yaz!");
+
+            try {
+                await addDoc(collection(db, "loveshop_data"), {
+                    type: 'song',
+                    songName: songName,
+                    sender: sender,
+                    timestamp: Date.now()
+                });
+                alert("Şarkı başarıyla listeye eklendi! 🎶");
+                document.getElementById('song-name').value = '';
+                document.getElementById('song-sender').value = '';
+            } catch (e) {
+                alert("Şarkı eklenirken hata oluştu.");
+            }
+        };
+
+        // --- GİZLİ VERİ KAYDETME ---
         window.saveData = async (type) => {
             const hint = document.getElementById(`${type}-hint`).value;
             const password = document.getElementById(`${type}-password`).value;
@@ -223,7 +299,7 @@
         };
 
         window.deleteFile = async (id) => {
-            if(confirm("Bu anıyı kalıcı olarak silmek istiyor musun?")) {
+            if(confirm("Bu içeriği kalıcı olarak silmek istiyor musun?")) {
                 await deleteDoc(doc(db, "loveshop_data", id));
             }
         };
@@ -236,20 +312,23 @@
             currentSnapshot = onSnapshot(q, (snapshot) => {
                 const notesList = document.getElementById('notes-list');
                 const imagesList = document.getElementById('images-list');
+                const songsList = document.getElementById('songs-list');
                 
                 notesList.innerHTML = '';
                 imagesList.innerHTML = '';
+                songsList.innerHTML = '';
 
                 if(snapshot.empty) {
                     notesList.innerHTML = '<p class="text-center text-pink-500 font-medium">Henüz hiç gizli not eklenmemiş.</p>';
                     imagesList.innerHTML = '<p class="text-center text-pink-500 font-medium col-span-2">Henüz hiç gizli resim eklenmemiş.</p>';
+                    songsList.innerHTML = '<p class="text-center text-pink-500 font-medium">Henüz şarkı eklenmemiş. İlk şarkıyı sen ekle!</p>';
                     return;
                 }
 
                 snapshot.forEach((docSnap) => {
                     const item = docSnap.data();
                     const id = docSnap.id;
-                    const deleteBtn = isAdmin ? `<button onclick="deleteFile('${id}')" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition">🗑️</button>` : '';
+                    const deleteBtn = isAdmin ? `<button onclick="deleteFile('${id}')" class="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition font-bold text-lg z-10">🗑️</button>` : '';
 
                     if(item.type === 'note') {
                         notesList.innerHTML += `
@@ -264,7 +343,7 @@
                                 <div id="result-${id}"></div>
                             </div>
                         `;
-                    } else {
+                    } else if (item.type === 'image') {
                         imagesList.innerHTML += `
                             <div class="glass-panel p-5 relative">
                                 ${deleteBtn}
@@ -278,6 +357,31 @@
                                 </div>
                                 <p id="error-${id}" class="text-red-500 text-sm mt-2 hidden-element text-center">❌ Hatalı şifre.</p>
                                 <div id="result-${id}"></div>
+                            </div>
+                        `;
+                    } else if (item.type === 'song') {
+                        // YENİ: Akıllı Şarkı Linki Sistemi
+                        let songLink = "";
+                        const inputText = item.songName.trim();
+                        
+                        // Eğer girilen şey bir linkse olduğu gibi bırak, değilse YouTube'da arat
+                        if(inputText.startsWith("http") || inputText.startsWith("www")) {
+                            songLink = inputText.startsWith("www") ? "https://" + inputText : inputText;
+                        } else {
+                            songLink = `https://www.youtube.com/results?search_query=${encodeURIComponent(inputText)}`;
+                        }
+
+                        songsList.innerHTML += `
+                            <div class="glass-panel p-4 relative flex items-center gap-3 border border-pink-200 hover:shadow-lg transition group">
+                                ${deleteBtn}
+                                <div class="text-4xl group-hover:scale-110 transition transform">🎵</div>
+                                <div class="flex-1 pr-2 md:pr-6">
+                                    <h3 class="font-bold text-gray-800 break-words line-clamp-1">${item.songName}</h3>
+                                    <p class="text-xs text-pink-500 mt-1">Armağan eden: ${item.sender}</p>
+                                </div>
+                                <a href="${songLink}" target="_blank" class="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-full text-sm font-semibold shadow-md transition flex items-center gap-2 whitespace-nowrap">
+                                    ▶️ Aç
+                                </a>
                             </div>
                         `;
                     }

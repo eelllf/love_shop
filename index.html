@@ -36,9 +36,26 @@
             border-radius: 1rem;
         }
         .hidden-element { display: none !important; }
+
+        /* Uçuşan Kalpler Animasyonu */
+        .heart-particle {
+            position: absolute;
+            bottom: -10vh;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 24px;
+            animation: floatUp linear infinite;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-110vh) rotate(360deg); opacity: 0; }
+        }
     </style>
 </head>
-<body class="min-h-screen text-gray-800 pb-10">
+<body class="min-h-screen text-gray-800 pb-10 relative">
+
+    <!-- ARKA PLAN UÇUŞAN KALPLER (Tıklamaları engellemez) -->
+    <div id="hearts-bg" class="fixed inset-0 pointer-events-none z-0 overflow-hidden"></div>
 
     <!-- 1. GİRİŞ (KİLİT) EKRANI -->
     <div id="entrance-screen" class="fixed inset-0 z-50 flex items-center justify-center px-4">
@@ -52,7 +69,7 @@
             
             <input type="text" id="secret-date-input" class="w-full p-4 border-2 border-pink-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 mb-4 text-center bg-white bg-opacity-80 text-lg tracking-widest font-semibold text-pink-600" placeholder="GG/AA/YYYY">
             
-            <button onclick="checkDate()" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 rounded-xl transition shadow-lg text-lg">
+            <button onclick="checkDate()" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 rounded-xl transition shadow-lg text-lg relative z-10">
                 Kilidi Aç
             </button>
             <p id="entrance-error" class="text-red-600 font-semibold text-sm mt-3 hidden-element">❌ Tarih yanlış, lütfen tekrar düşün...</p>
@@ -60,14 +77,29 @@
     </div>
 
     <!-- 2. ANA SİTE -->
-    <div id="main-content" class="hidden-element">
+    <div id="main-content" class="hidden-element relative z-10">
         <!-- Üst Başlık -->
-        <header class="bg-pink-400 text-white shadow-md p-5 text-center rounded-b-3xl mb-8">
+        <header class="bg-pink-400 text-white shadow-md p-5 text-center rounded-b-3xl mb-6">
             <h1 class="text-4xl font-bold tracking-wider cursor-pointer hover:scale-105 transition transform inline-block" onclick="triggerAdminLogin()">💖 Love Shop 💖</h1>
             <p class="text-pink-100 text-sm mt-2">Sadece ikimize özel gizli anılarımız</p>
         </header>
 
         <div class="max-w-3xl mx-auto px-4">
+            
+            <!-- YENİ: AŞK SAYACI (Zaman Tüneli) -->
+            <div class="glass-panel p-4 mb-8 mx-auto max-w-md text-center border-2 border-pink-300">
+                <h3 class="text-pink-700 font-bold mb-3 text-sm tracking-wide">BİRLİKTE GEÇEN ZAMANIMIZ</h3>
+                <div class="flex justify-center gap-4 text-pink-600">
+                    <div class="flex flex-col items-center"><span id="counter-days" class="text-3xl font-bold">0</span><span class="text-xs font-semibold">Gün</span></div>
+                    <div class="text-2xl font-bold mt-1">:</div>
+                    <div class="flex flex-col items-center"><span id="counter-hours" class="text-3xl font-bold">0</span><span class="text-xs font-semibold">Saat</span></div>
+                    <div class="text-2xl font-bold mt-1">:</div>
+                    <div class="flex flex-col items-center"><span id="counter-minutes" class="text-3xl font-bold">0</span><span class="text-xs font-semibold">Dakika</span></div>
+                    <div class="text-2xl font-bold mt-1">:</div>
+                    <div class="flex flex-col items-center"><span id="counter-seconds" class="text-3xl font-bold animate-pulse text-pink-500">0</span><span class="text-xs font-semibold">Saniye</span></div>
+                </div>
+            </div>
+
             <!-- 3'LÜ SEKMELER -->
             <div class="flex justify-center space-x-2 md:space-x-4 mb-6">
                 <button id="btn-notes" class="px-4 md:px-6 py-2 bg-pink-500 text-white rounded-full font-semibold shadow-lg hover:bg-pink-600 transition" onclick="switchTab('notes')">📝 Notlar</button>
@@ -144,6 +176,48 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // --- ARKA PLAN UÇUŞAN KALPLER ---
+        function createHeart() {
+            const container = document.getElementById('hearts-bg');
+            const heart = document.createElement('div');
+            heart.classList.add('heart-particle');
+            
+            // Rastgele şekiller, boyutlar ve hızlar
+            const shapes = ['💖', '✨', '💕', '🤍'];
+            heart.innerText = shapes[Math.floor(Math.random() * shapes.length)];
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.animationDuration = Math.random() * 5 + 6 + 's';
+            heart.style.fontSize = Math.random() * 1 + 1 + 'rem';
+            
+            container.appendChild(heart);
+            setTimeout(() => { heart.remove(); }, 10000);
+        }
+        setInterval(createHeart, 600); // Her saniyeden kısa sürede bir kalp fırlat
+
+        // --- AŞK SAYACI (CANLI ZAMAN TÜNELİ) ---
+        let counterInterval = null;
+        function startLoveCounter() {
+            // BAŞLANGIÇ TARİHİ: 23 Ağustos 2026 Saat 00:00
+            const startDate = new Date("2026-08-23T00:00:00").getTime();
+            
+            counterInterval = setInterval(() => {
+                const now = new Date().getTime();
+                const distance = now - startDate;
+                
+                if (distance > 0) {
+                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                    
+                    document.getElementById("counter-days").innerText = days;
+                    document.getElementById("counter-hours").innerText = hours;
+                    document.getElementById("counter-minutes").innerText = minutes;
+                    document.getElementById("counter-seconds").innerText = seconds;
+                }
+            }, 1000);
+        }
+
         // --- GİRİŞ KONTROLÜ ---
         window.checkDate = () => {
             const userInput = document.getElementById('secret-date-input').value.trim();
@@ -152,6 +226,7 @@
                 document.getElementById('entrance-screen').classList.add('hidden-element');
                 document.getElementById('main-content').classList.remove('hidden-element');
                 triggerMassiveHeartConfetti(); 
+                startLoveCounter(); // İçeri girince sayacı çalıştır
             } else {
                 document.getElementById('entrance-error').classList.remove('hidden-element');
             }
@@ -202,7 +277,7 @@
                     document.getElementById('admin-note-panel').classList.remove('hidden-element');
                     document.getElementById('admin-image-panel').classList.remove('hidden-element');
                     alert("Hoş geldin, paneller açıldı! 💖");
-                    loadDataFromFirebase();
+                    loadDataFromFirebase(); // Admin silme ikonlarını eklemek için yenile
                 } else {
                     alert("Yanlış şifre!");
                 }
@@ -360,11 +435,9 @@
                             </div>
                         `;
                     } else if (item.type === 'song') {
-                        // YENİ: Akıllı Şarkı Linki Sistemi
                         let songLink = "";
                         const inputText = item.songName.trim();
                         
-                        // Eğer girilen şey bir linkse olduğu gibi bırak, değilse YouTube'da arat
                         if(inputText.startsWith("http") || inputText.startsWith("www")) {
                             songLink = inputText.startsWith("www") ? "https://" + inputText : inputText;
                         } else {

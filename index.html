@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Love Shop</title>
+    <!-- Tasarım Kütüphanesi -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Şifreleme (AES) Kütüphanesi -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <!-- Kalp Konfeti Kütüphanesi -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+        body { font-family: 'Poppins', sans-serif; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 192, 203, 0.5);
+        }
+        .hidden-element { display: none; }
+    </style>
+</head>
+<body class="bg-pink-50 min-h-screen text-gray-800 pb-10">
+
+    <!-- Üst Başlık (Gizli Admin Girişi İçin Başlığa 3 Kez Tıklanacak) -->
+    <header class="bg-pink-400 text-white shadow-md p-5 text-center rounded-b-3xl mb-8">
+        <h1 class="text-4xl font-bold tracking-wider cursor-pointer hover:scale-105 transition transform inline-block" onclick="triggerAdminLogin()">💖 Love Shop 💖</h1>
+        <p class="text-pink-100 text-sm mt-2">Sadece ikimize özel gizli anılarımız</p>
+    </header>
+
+    <div class="max-w-3xl mx-auto px-4">
+        <!-- Sekmeler -->
+        <div class="flex justify-center space-x-4 mb-6">
+            <button id="btn-notes" class="px-6 py-2 bg-pink-500 text-white rounded-full font-semibold shadow-lg hover:bg-pink-600 transition" onclick="switchTab('notes')">📝 Notlar</button>
+            <button id="btn-images" class="px-6 py-2 bg-pink-200 text-pink-700 rounded-full font-semibold shadow-lg hover:bg-pink-300 transition" onclick="switchTab('images')">📸 Resimler</button>
+        </div>
+
+        <!-- NOTLAR BÖLÜMÜ -->
+        <div id="tab-notes">
+            <!-- Yönetici Paneli (Sadece sen göreceksin) -->
+            <div id="admin-note-panel" class="glass-panel p-6 rounded-2xl shadow-sm mb-8 hidden-element border-2 border-pink-400">
+                <h2 class="text-xl font-semibold text-pink-600 mb-4">✨ YENİ GİZLİ NOT EKLE (ADMİN)</h2>
+                <textarea id="note-content" class="w-full p-3 border border-pink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400 mb-3" rows="3" placeholder="Buraya gizli bir mesaj yaz..."></textarea>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                    <input type="text" id="note-hint" class="w-full p-3 border border-pink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400" placeholder="İpucu">
+                    <input type="password" id="note-password" class="w-full p-3 border border-pink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400" placeholder="Şifre belirle">
+                </div>
+                <button onclick="saveData('note')" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-semibold py-3 rounded-xl transition shadow-md">
+                    🔒 Şifrele ve Buluta Kaydet
+                </button>
+            </div>
+
+            <!-- Herkese Açık Notlar Listesi -->
+            <div id="notes-list" class="space-y-4">
+                <p class="text-center text-pink-400 animate-pulse">Buluttan anılar yükleniyor...</p>
+            </div>
+        </div>
+
+        <!-- RESİMLER BÖLÜMÜ -->
+        <div id="tab-images" class="hidden-element">
+            <!-- Yönetici Paneli (Sadece sen göreceksin) -->
+            <div id="admin-image-panel" class="glass-panel p-6 rounded-2xl shadow-sm mb-8 hidden-element border-2 border-pink-400">
+                <h2 class="text-xl font-semibold text-pink-600 mb-4">✨ YENİ GİZLİ RESİM EKLE (ADMİN)</h2>
+                <input type="file" id="image-file" accept="image/*" class="w-full p-3 border border-pink-200 rounded-xl bg-white mb-3">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                    <input type="text" id="image-hint" class="w-full p-3 border border-pink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400" placeholder="İpucu">
+                    <input type="password" id="image-password" class="w-full p-3 border border-pink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400" placeholder="Şifre belirle">
+                </div>
+                <button onclick="saveData('image')" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-semibold py-3 rounded-xl transition shadow-md">
+                    🔒 Şifrele ve Buluta Kaydet
+                </button>
+            </div>
+
+            <!-- Herkese Açık Resimler Listesi -->
+            <div id="images-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Senin Firebase Anahtarların
+        const firebaseConfig = {
+            apiKey: "AIzaSyDasi6Ojoxr_-6pKumuJToJVK1C6O5OAmM",
+            authDomain: "lovve-21f32.firebaseapp.com",
+            projectId: "lovve-21f32",
+            storageBucket: "lovve-21f32.firebasestorage.app",
+            messagingSenderId: "911938070590",
+            appId: "1:911938070590:web:b03b452e3cbf06a447896f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- ARAYÜZ VE ANİMASYONLAR ---
+        window.switchTab = (tabName) => {
+            document.getElementById('tab-notes').classList.add('hidden-element');
+            document.getElementById('tab-images').classList.add('hidden-element');
+            document.getElementById('btn-notes').className = "px-6 py-2 bg-pink-200 text-pink-700 rounded-full font-semibold shadow-lg hover:bg-pink-300 transition";
+            document.getElementById('btn-images').className = "px-6 py-2 bg-pink-200 text-pink-700 rounded-full font-semibold shadow-lg hover:bg-pink-300 transition";
+
+            if(tabName === 'notes') {
+                document.getElementById('tab-notes').classList.remove('hidden-element');
+                document.getElementById('btn-notes').className = "px-6 py-2 bg-pink-500 text-white rounded-full font-semibold shadow-lg hover:bg-pink-600 transition";
+            } else {
+                document.getElementById('tab-images').classList.remove('hidden-element');
+                document.getElementById('btn-images').className = "px-6 py-2 bg-pink-500 text-white rounded-full font-semibold shadow-lg hover:bg-pink-600 transition";
+            }
+        };
+
+        window.triggerMassiveHeartConfetti = () => {
+            const duration = 2500;
+            const end = Date.now() + duration;
+            (function frame() {
+                confetti({ particleCount: 4, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#ff0000', '#ff69b4', '#ff1493'], shapes: ['heart'] });
+                confetti({ particleCount: 4, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#ff0000', '#ff69b4', '#ff1493'], shapes: ['heart'] });
+                confetti({ particleCount: 3, angle: 270, spread: 90, origin: { y: 0, x: 0.5 }, colors: ['#ffc0cb', '#ff69b4'], shapes: ['heart'] });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+        };
+
+        // --- GİZLİ YÖNETİCİ GİRİŞİ ---
+        let clickCount = 0;
+        let isAdmin = false;
+        
+        window.triggerAdminLogin = () => {
+            clickCount++;
+            if(clickCount === 3) {
+                const pwd = prompt("Admin Şifresini Girin:");
+                if(pwd === "latif") { // Admin Şifresi
+                    isAdmin = true;
+                    document.getElementById('admin-note-panel').classList.remove('hidden-element');
+                    document.getElementById('admin-image-panel').classList.remove('hidden-element');
+                    alert("Hoş geldin, paneller açıldı! 💖");
+                    // Listeleri silme butonlarıyla tekrar çizdirmek için sayfayı yenilemeden bir tetikleme yapalım:
+                    loadDataFromFirebase();
+                } else {
+                    alert("Yanlış şifre!");
+                }
+                clickCount = 0;
+            }
+        };
+
+        // --- VERİ KAYDETME (FİREBASE) ---
+        window.saveData = async (type) => {
+            const hint = document.getElementById(`${type}-hint`).value;
+            const password = document.getElementById(`${type}-password`).value;
+            let rawData = "";
+
+            if(!hint || !password) return alert("Lütfen ipucu ve şifreyi gir!");
+
+            if(type === 'note') {
+                rawData = document.getElementById('note-content').value;
+                if(!rawData) return alert("Lütfen bir not yaz!");
+                processAndUpload(type, rawData, hint, password);
+            } else {
+                const fileInput = document.getElementById('image-file');
+                if(!fileInput.files[0]) return alert("Lütfen resim seç!");
+                const reader = new FileReader();
+                reader.onload = (e) => processAndUpload(type, e.target.result, hint, password);
+                reader.readAsDataURL(fileInput.files[0]);
+            }
+        };
+
+        async function processAndUpload(type, data, hint, password) {
+            try {
+                const encryptedData = CryptoJS.AES.encrypt(data, password).toString();
+                await addDoc(collection(db, "loveshop_data"), {
+                    type: type,
+                    hint: hint,
+                    encryptedData: encryptedData,
+                    timestamp: Date.now()
+                });
+                alert("Başarıyla şifrelendi ve buluta kaydedildi! ✨");
+                document.getElementById(`${type}-hint`).value = '';
+                document.getElementById(`${type}-password`).value = '';
+                if(type==='note') document.getElementById('note-content').value = '';
+                if(type==='image') document.getElementById('image-file').value = '';
+            } catch (e) {
+                alert("Yükleme başarısız oldu.");
+            }
+        }
+
+        // --- VERİ ÇÖZME ---
+        window.unlockData = (id, encryptedData, type) => {
+            const passwordInput = document.getElementById(`pwd-${id}`).value;
+            const resultDiv = document.getElementById(`result-${id}`);
+            const errorDiv = document.getElementById(`error-${id}`);
+
+            try {
+                const bytes = CryptoJS.AES.decrypt(encryptedData, passwordInput);
+                const originalData = bytes.toString(CryptoJS.enc.Utf8);
+
+                if (originalData) {
+                    triggerMassiveHeartConfetti();
+                    errorDiv.classList.add('hidden-element');
+                    if(type === 'note') {
+                        resultDiv.innerHTML = `<div class="mt-4 p-4 bg-pink-100 border-l-4 border-pink-500 rounded-lg text-pink-900 break-words whitespace-pre-wrap font-medium">${originalData}</div>`;
+                    } else {
+                        resultDiv.innerHTML = `<img src="${originalData}" class="mt-4 w-full h-auto rounded-lg shadow-md border-2 border-pink-300">`;
+                    }
+                } else {
+                    throw new Error("Yanlış Şifre");
+                }
+            } catch (e) {
+                errorDiv.classList.remove('hidden-element');
+                resultDiv.innerHTML = '';
+            }
+        };
+
+        window.deleteFile = async (id) => {
+            if(confirm("Bu anıyı kalıcı olarak silmek istiyor musun?")) {
+                await deleteDoc(doc(db, "loveshop_data", id));
+            }
+        };
+
+        // --- VERİLERİ CANLI ÇEKME ---
+        let currentSnapshot = null;
+        function loadDataFromFirebase() {
+            const q = query(collection(db, "loveshop_data"), orderBy("timestamp", "desc"));
+            if(currentSnapshot) currentSnapshot(); // Eski dinleyiciyi iptal et
+            
+            currentSnapshot = onSnapshot(q, (snapshot) => {
+                const notesList = document.getElementById('notes-list');
+                const imagesList = document.getElementById('images-list');
+                
+                notesList.innerHTML = '';
+                imagesList.innerHTML = '';
+
+                if(snapshot.empty) {
+                    notesList.innerHTML = '<p class="text-center text-pink-400">Henüz hiç gizli not eklenmemiş.</p>';
+                    imagesList.innerHTML = '<p class="text-center text-pink-400 col-span-2">Henüz hiç gizli resim eklenmemiş.</p>';
+                    return;
+                }
+
+                snapshot.forEach((docSnap) => {
+                    const item = docSnap.data();
+                    const id = docSnap.id;
+                    const deleteBtn = isAdmin ? `<button onclick="deleteFile('${id}')" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition">🗑️</button>` : '';
+
+                    if(item.type === 'note') {
+                        notesList.innerHTML += `
+                            <div class="glass-panel p-5 rounded-xl shadow-sm relative border border-pink-100">
+                                ${deleteBtn}
+                                <h3 class="font-semibold text-gray-700 mb-3">İpucu: <span class="text-pink-600">${item.hint}</span></h3>
+                                <div class="flex gap-2">
+                                    <input type="password" id="pwd-${id}" class="flex-1 p-2 border border-pink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400" placeholder="Şifreyi gir">
+                                    <button onclick="unlockData('${id}', '${item.encryptedData}', 'note')" class="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-lg transition shadow">Aç</button>
+                                </div>
+                                <p id="error-${id}" class="text-red-500 text-sm mt-2 hidden-element">❌ Hatalı şifre, tekrar dene.</p>
+                                <div id="result-${id}"></div>
+                            </div>
+                        `;
+                    } else {
+                        imagesList.innerHTML += `
+                            <div class="glass-panel p-5 rounded-xl shadow-sm relative border border-pink-100">
+                                ${deleteBtn}
+                                <div class="flex flex-col items-center mb-3">
+                                    <div class="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center text-2xl mb-2 shadow-inner border border-pink-200">🔒</div>
+                                    <h3 class="font-semibold text-gray-700 text-center">İpucu: <span class="text-pink-600">${item.hint}</span></h3>
+                                </div>
+                                <div class="flex flex-col gap-2">
+                                    <input type="password" id="pwd-${id}" class="w-full p-2 border border-pink-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400" placeholder="Şifreyi gir">
+                                    <button onclick="unlockData('${id}', '${item.encryptedData}', 'image')" class="w-full py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-lg transition shadow">Kilidi Aç</button>
+                                </div>
+                                <p id="error-${id}" class="text-red-500 text-sm mt-2 hidden-element text-center">❌ Hatalı şifre.</p>
+                                <div id="result-${id}"></div>
+                            </div>
+                        `;
+                    }
+                });
+            });
+        }
+
+        // Sayfa açıldığında verileri yükle
+        loadDataFromFirebase();
+    </script>
+</body>
+</html>

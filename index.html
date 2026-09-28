@@ -123,7 +123,7 @@
                 </div>
             </div>
 
-            <!-- YENİ: ETKİLEŞİMLİ VE 24 SAAT SÜRELİ ZARF KUTUSU -->
+            <!-- ETKİLEŞİMLİ VE 24 SAAT SÜRELİ ZARF KUTUSU -->
             <div id="news-container" class="hidden-element mb-8 mx-auto max-w-md text-center">
                 <!-- Zarf (Kapalı Hali) -->
                 <div id="news-closed" class="cursor-pointer transition transform hover:scale-110 flex flex-col items-center justify-center" onclick="openNewsEnvelope()">
@@ -201,15 +201,17 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+        // SENİN KENDİ FIREBASE KİMLİĞİN
         const firebaseConfig = {
             apiKey: "AIzaSyDasi6Ojoxr_-6pKumuJToJVK1C6O5OAmM",
             authDomain: "lovve-21f32.firebaseapp.com",
             projectId: "lovve-21f32",
             storageBucket: "lovve-21f32.firebasestorage.app",
             messagingSenderId: "911938070590",
-            appId: "1:911938070590:web:b03b452e3cbf06a447896f"
+            appId: "1:911938070590:web:b03b452e3cbf06a447896f",
+            measurementId: "G-0TE68RWG53"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -286,7 +288,6 @@
         window.openNewsEnvelope = () => {
             document.getElementById('news-closed').classList.add('hidden-element');
             document.getElementById('news-opened').classList.remove('hidden-element');
-            // Zarf açılınca hafif bir konfeti patlasın
             confetti({ particleCount: 30, spread: 70, origin: { y: 0.6 }, colors: ['#ffc0cb', '#ff69b4'] });
         };
 
@@ -436,7 +437,8 @@
 
         let currentSnapshot = null;
         function loadDataFromFirebase() {
-            const q = query(collection(db, "loveshop_data"), orderBy("timestamp", "desc"));
+            // YENİ: Hata veren orderBy kısmını sildik, JavaScript ile sıralayacağız
+            const q = query(collection(db, "loveshop_data"));
             if(currentSnapshot) currentSnapshot(); 
             
             currentSnapshot = onSnapshot(q, (snapshot) => {
@@ -451,17 +453,27 @@
                 
                 notesList.innerHTML = ''; imagesList.innerHTML = ''; songsList.innerHTML = '';
                 
-                // Tam 24 saatin milisaniye karşılığı
                 const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
                 const now = Date.now();
 
+                // Verileri önce bir diziye alıp sonra sıraya sokuyoruz
+                let allItems = [];
                 snapshot.forEach((docSnap) => {
-                    const item = docSnap.data();
-                    const id = docSnap.id;
+                    allItems.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                // Zaman damgası olmayan eski verileri kaybetmemek için Javascript ile sıralama
+                allItems.sort((a, b) => {
+                    const timeA = a.timestamp || 0;
+                    const timeB = b.timestamp || 0;
+                    return timeB - timeA;
+                });
+
+                allItems.forEach((item) => {
+                    const id = item.id;
                     const deleteBtn = isAdmin ? `<button onclick="deleteFile('${id}')" class="absolute -top-2 -right-2 bg-white bg-opacity-90 rounded-full w-8 h-8 flex items-center justify-center text-gray-500 hover:text-red-500 transition shadow-md border border-pink-200 z-20">🗑️</button>` : '';
 
                     if(item.type === 'news') {
-                        // 24 SAAT KURALI UYGULAMASI (Mesaj 24 saatten eskiyse yoksayılır, hiç görünmez)
                         if (now - item.timestamp <= TWENTY_FOUR_HOURS) {
                             if(!latestNews || item.timestamp > latestNews.timestamp) {
                                 latestNews = { ...item, id };
@@ -500,9 +512,9 @@
                         `;
                     } else if (item.type === 'song') {
                         hasSongs = true;
-                        let songLink = inputText = item.songName.trim();
-                        if(inputText.startsWith("http") || inputText.startsWith("www")) { songLink = inputText.startsWith("www") ? "https://" + inputText : inputText; } 
-                        else { songLink = `https://www.youtube.com/results?search_query=${encodeURIComponent(inputText)}`; }
+                        let songLink = item.songName.trim();
+                        if(songLink.startsWith("http") || songLink.startsWith("www")) { songLink = songLink.startsWith("www") ? "https://" + songLink : songLink; } 
+                        else { songLink = `https://www.youtube.com/results?search_query=${encodeURIComponent(songLink)}`; }
 
                         songsList.innerHTML += `
                             <div class="glass-panel p-3 md:p-4 relative flex items-center gap-2 md:gap-3 border border-pink-200 hover:shadow-lg transition group">
@@ -525,9 +537,9 @@
                 // HABER KUTUSUNU YÖNET
                 const newsContainer = document.getElementById('news-container');
                 if(latestNews) {
-                    newsContainer.classList.remove('hidden-element'); // Zarf container'ını göster
-                    document.getElementById('news-closed').classList.remove('hidden-element'); // Kapalı zarfı göster
-                    document.getElementById('news-opened').classList.add('hidden-element'); // Mesajı gizle (tıklayana kadar)
+                    newsContainer.classList.remove('hidden-element'); 
+                    document.getElementById('news-closed').classList.remove('hidden-element'); 
+                    document.getElementById('news-opened').classList.add('hidden-element'); 
                     document.getElementById('news-text').innerText = latestNews.content;
                     
                     if(isAdmin) {
@@ -536,7 +548,7 @@
                         document.getElementById('news-delete-container').innerHTML = '';
                     }
                 } else {
-                    newsContainer.classList.add('hidden-element'); // Hiç haber yoksa (veya süresi dolduysa) gizle
+                    newsContainer.classList.add('hidden-element'); 
                 }
             });
         }

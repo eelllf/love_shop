@@ -37,7 +37,7 @@
         }
         .hidden-element { display: none !important; }
 
-        /* Uçuşan Kalpler Animasyonu */
+        /* Uçuşan Kalpler */
         .heart-particle {
             position: absolute;
             bottom: -10vh;
@@ -79,7 +79,6 @@
                 İpucu: Aşk yolunun başlangıç tarihi... 💖
             </p>
             
-            <!-- DİKKAT: autocomplete="off" eklendi, artık tarih hafızada kalmayacak -->
             <input type="text" id="secret-date-input" autocomplete="off" class="w-full p-4 border-2 border-pink-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 mb-4 text-center bg-white bg-opacity-80 text-lg tracking-widest font-semibold text-pink-600" placeholder="GG/AA/YYYY">
             
             <button onclick="checkDate()" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 rounded-xl transition shadow-lg text-lg relative z-10">
@@ -99,8 +98,8 @@
 
         <div class="max-w-3xl mx-auto px-4">
             
-            <!-- AŞK SAYACI (Zaman Tüneli) -->
-            <div class="glass-panel p-4 mb-8 mx-auto max-w-md text-center border-2 border-pink-300">
+            <!-- AŞK SAYACI -->
+            <div class="glass-panel p-4 mb-6 mx-auto max-w-md text-center border-2 border-pink-300">
                 <h3 class="text-pink-700 font-bold mb-3 text-sm tracking-wide">BİRLİKTE GEÇEN ZAMANIMIZ</h3>
                 <div class="flex justify-center gap-4 text-pink-600">
                     <div class="flex flex-col items-center"><span id="counter-days" class="text-3xl font-bold">0</span><span class="text-xs font-semibold">Gün</span></div>
@@ -110,6 +109,34 @@
                     <div class="flex flex-col items-center"><span id="counter-minutes" class="text-3xl font-bold">0</span><span class="text-xs font-semibold">Dakika</span></div>
                     <div class="text-2xl font-bold mt-1">:</div>
                     <div class="flex flex-col items-center"><span id="counter-seconds" class="text-3xl font-bold animate-pulse text-pink-500">0</span><span class="text-xs font-semibold">Saniye</span></div>
+                </div>
+            </div>
+
+            <!-- ADMİN: HABER GÜNCELLEME PANELİ -->
+            <div id="admin-news-panel" class="glass-panel p-5 mb-6 hidden-element border-2 border-pink-500 mx-auto max-w-full">
+                <h2 class="text-lg font-bold text-pink-700 mb-3 text-center">📢 GÜNÜN MESAJINI YAYINLA (24 Saatte Silinir)</h2>
+                <div class="flex flex-col md:flex-row gap-3">
+                    <textarea id="news-input" class="flex-1 p-3 border border-pink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400 bg-white bg-opacity-70" rows="2" placeholder="Örn: Son dakika! Bugün seni dünden daha çok seviyorum..."></textarea>
+                    <button onclick="saveNews()" class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 px-6 rounded-xl transition shadow-md whitespace-nowrap">
+                        Zarfı Gönder
+                    </button>
+                </div>
+            </div>
+
+            <!-- YENİ: ETKİLEŞİMLİ VE 24 SAAT SÜRELİ ZARF KUTUSU -->
+            <div id="news-container" class="hidden-element mb-8 mx-auto max-w-md text-center">
+                <!-- Zarf (Kapalı Hali) -->
+                <div id="news-closed" class="cursor-pointer transition transform hover:scale-110 flex flex-col items-center justify-center" onclick="openNewsEnvelope()">
+                    <div class="text-7xl animate-bounce drop-shadow-lg">💌</div>
+                    <p class="text-pink-600 font-extrabold mt-3 animate-pulse bg-white bg-opacity-60 px-4 py-1 rounded-full shadow-sm inline-block">Sana Özel Bir Mesaj Var!</p>
+                    <p class="text-xs text-gray-600 mt-1 font-semibold">(Açmak için zarfa dokun)</p>
+                </div>
+
+                <!-- Mesaj (Açık Hali) -->
+                <div id="news-opened" class="hidden-element glass-panel p-6 border-l-4 border-l-pink-500 relative bg-gradient-to-r from-pink-50 to-transparent">
+                    <h3 class="text-pink-700 font-bold text-sm tracking-widest mb-3">GÜNÜN MESAJI</h3>
+                    <p id="news-text" class="text-gray-800 font-medium text-lg italic"></p>
+                    <div id="news-delete-container" class="absolute top-2 right-2"></div>
                 </div>
             </div>
 
@@ -167,7 +194,6 @@
                         🎵 Şarkıyı Listeye Ekle
                     </button>
                 </div>
-                
                 <div id="songs-list" class="space-y-3"></div>
             </div>
         </div>
@@ -194,13 +220,11 @@
             const container = document.getElementById('hearts-bg');
             const heart = document.createElement('div');
             heart.classList.add('heart-particle');
-            
             const shapes = ['💖', '✨', '💕', '🤍'];
             heart.innerText = shapes[Math.floor(Math.random() * shapes.length)];
             heart.style.left = Math.random() * 100 + 'vw';
             heart.style.animationDuration = Math.random() * 5 + 6 + 's';
             heart.style.fontSize = Math.random() * 1 + 1 + 'rem';
-            
             container.appendChild(heart);
             setTimeout(() => { heart.remove(); }, 10000);
         }
@@ -210,21 +234,14 @@
         let counterInterval = null;
         function startLoveCounter() {
             const startDate = new Date("2026-08-23T00:00:00").getTime();
-            
             counterInterval = setInterval(() => {
                 const now = new Date().getTime();
                 const distance = now - startDate;
-                
                 if (distance > 0) {
-                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-                    
-                    document.getElementById("counter-days").innerText = days;
-                    document.getElementById("counter-hours").innerText = hours;
-                    document.getElementById("counter-minutes").innerText = minutes;
-                    document.getElementById("counter-seconds").innerText = seconds;
+                    document.getElementById("counter-days").innerText = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    document.getElementById("counter-hours").innerText = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    document.getElementById("counter-minutes").innerText = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    document.getElementById("counter-seconds").innerText = Math.floor((distance % (1000 * 60)) / 1000);
                 }
             }, 1000);
         }
@@ -265,10 +282,17 @@
             }
         };
 
+        // --- ZARF AÇMA EFEKTİ ---
+        window.openNewsEnvelope = () => {
+            document.getElementById('news-closed').classList.add('hidden-element');
+            document.getElementById('news-opened').classList.remove('hidden-element');
+            // Zarf açılınca hafif bir konfeti patlasın
+            confetti({ particleCount: 30, spread: 70, origin: { y: 0.6 }, colors: ['#ffc0cb', '#ff69b4'] });
+        };
+
         // --- KONFETİ VE "E ❤️ L" ANİMASYONU ---
         window.triggerMassiveHeartConfetti = () => {
-            const duration = 2500;
-            const end = Date.now() + duration;
+            const end = Date.now() + 2500;
             (function frame() {
                 confetti({ particleCount: 4, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#ff0000', '#ff69b4', '#ff1493'], shapes: ['heart'] });
                 confetti({ particleCount: 4, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#ff0000', '#ff69b4', '#ff1493'], shapes: ['heart'] });
@@ -300,6 +324,7 @@
                 const pwd = prompt("Admin Şifresini Girin:");
                 if(pwd === "efsunlu") { 
                     isAdmin = true;
+                    document.getElementById('admin-news-panel').classList.remove('hidden-element');
                     document.getElementById('admin-note-panel').classList.remove('hidden-element');
                     document.getElementById('admin-image-panel').classList.remove('hidden-element');
                     alert("Hoş geldin, paneller açıldı! 💖");
@@ -311,33 +336,34 @@
             }
         };
 
+        // --- HABER/MESAJ YAYINLAMA ---
+        window.saveNews = async () => {
+            const newsText = document.getElementById('news-input').value.trim();
+            if(!newsText) return alert("Lütfen bir mesaj yaz!");
+            try {
+                await addDoc(collection(db, "loveshop_data"), { type: 'news', content: newsText, timestamp: Date.now() });
+                alert("Zarf başarıyla gönderildi! 📢");
+                document.getElementById('news-input').value = '';
+            } catch (e) { alert("Mesaj yayınlanırken hata oluştu."); }
+        };
+
         // --- ŞARKI KAYDETME ---
         window.savePublicSong = async () => {
             const songName = document.getElementById('song-name').value.trim();
             const sender = document.getElementById('song-sender').value.trim() || "Biri";
-
             if(!songName) return alert("Lütfen şarkı adını veya linkini yaz!");
-
             try {
-                await addDoc(collection(db, "loveshop_data"), {
-                    type: 'song',
-                    songName: songName,
-                    sender: sender,
-                    timestamp: Date.now()
-                });
+                await addDoc(collection(db, "loveshop_data"), { type: 'song', songName: songName, sender: sender, timestamp: Date.now() });
                 alert("Şarkı başarıyla listeye eklendi! 🎶");
                 document.getElementById('song-name').value = '';
                 document.getElementById('song-sender').value = '';
-            } catch (e) {
-                alert("Şarkı eklenirken hata oluştu.");
-            }
+            } catch (e) { alert("Şarkı eklenirken hata oluştu."); }
         };
 
         // --- FOTOĞRAF SIKIŞTIRMA VE KAYDETME ---
         window.saveData = async (type) => {
             const hint = document.getElementById(`${type}-hint`).value;
             const password = document.getElementById(`${type}-password`).value;
-
             if(!hint || !password) return alert("Lütfen ipucu ve şifreyi gir!");
 
             if(type === 'note') {
@@ -354,30 +380,12 @@
                     const img = new Image();
                     img.onload = function() {
                         const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 800; 
-                        const MAX_HEIGHT = 800;
-                        let width = img.width;
-                        let height = img.height;
-
-                        if (width > height) {
-                            if (width > MAX_WIDTH) {
-                                height *= MAX_WIDTH / width;
-                                width = MAX_WIDTH;
-                            }
-                        } else {
-                            if (height > MAX_HEIGHT) {
-                                width *= MAX_HEIGHT / height;
-                                height = MAX_HEIGHT;
-                            }
-                        }
-
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-
-                        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                        processAndUpload(type, compressedDataUrl, hint, password);
+                        let width = img.width, height = img.height;
+                        if (width > height) { if (width > 800) { height *= 800 / width; width = 800; } } 
+                        else { if (height > 800) { width *= 800 / height; height = 800; } }
+                        canvas.width = width; canvas.height = height;
+                        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                        processAndUpload(type, canvas.toDataURL('image/jpeg', 0.7), hint, password);
                     }
                     img.src = event.target.result;
                 }
@@ -388,45 +396,32 @@
         async function processAndUpload(type, data, hint, password) {
             try {
                 const encryptedData = CryptoJS.AES.encrypt(data, password).toString();
-                await addDoc(collection(db, "loveshop_data"), {
-                    type: type,
-                    hint: hint,
-                    encryptedData: encryptedData,
-                    timestamp: Date.now()
-                });
+                await addDoc(collection(db, "loveshop_data"), { type: type, hint: hint, encryptedData: encryptedData, timestamp: Date.now() });
                 alert("Başarıyla şifrelendi ve buluta kaydedildi! ✨");
                 document.getElementById(`${type}-hint`).value = '';
                 document.getElementById(`${type}-password`).value = '';
                 if(type==='note') document.getElementById('note-content').value = '';
                 if(type==='image') document.getElementById('image-file').value = '';
-            } catch (e) {
-                console.error(e);
-                alert("Yükleme başarısız oldu: Lütfen internetini kontrol et.");
-            }
+            } catch (e) { alert("Yükleme başarısız oldu: Lütfen internetini kontrol et."); }
         }
 
         window.unlockData = (id, encryptedData, type) => {
             const passwordInput = document.getElementById(`pwd-${id}`).value;
             const resultDiv = document.getElementById(`result-${id}`);
             const errorDiv = document.getElementById(`error-${id}`);
-
             try {
                 const bytes = CryptoJS.AES.decrypt(encryptedData, passwordInput);
                 const originalData = bytes.toString(CryptoJS.enc.Utf8);
-
                 if (originalData) {
                     triggerMassiveHeartConfetti();
                     errorDiv.classList.add('hidden-element');
-                    
                     if(type === 'note') {
                         resultDiv.innerHTML = `<div class="mt-4 p-4 bg-white bg-opacity-70 border-l-4 border-pink-500 rounded-lg text-pink-900 break-words whitespace-pre-wrap font-medium">${originalData}</div>`;
                     } else {
                         showLoveInitials();
                         resultDiv.innerHTML = `<img src="${originalData}" class="mt-4 w-full h-auto rounded-lg shadow-md border-2 border-pink-300">`;
                     }
-                } else {
-                    throw new Error("Yanlış Şifre");
-                }
+                } else { throw new Error("Yanlış Şifre"); }
             } catch (e) {
                 errorDiv.classList.remove('hidden-element');
                 resultDiv.innerHTML = '';
@@ -449,23 +444,31 @@
                 const imagesList = document.getElementById('images-list');
                 const songsList = document.getElementById('songs-list');
                 
-                notesList.innerHTML = '';
-                imagesList.innerHTML = '';
-                songsList.innerHTML = '';
-
-                if(snapshot.empty) {
-                    notesList.innerHTML = '<p class="text-center text-pink-500 font-medium">Henüz hiç gizli not eklenmemiş.</p>';
-                    imagesList.innerHTML = '<p class="text-center text-pink-500 font-medium col-span-2">Henüz hiç gizli resim eklenmemiş.</p>';
-                    songsList.innerHTML = '<p class="text-center text-pink-500 font-medium">Henüz şarkı eklenmemiş. İlk şarkıyı sen ekle!</p>';
-                    return;
-                }
+                let latestNews = null;
+                let hasNotes = false;
+                let hasImages = false;
+                let hasSongs = false;
+                
+                notesList.innerHTML = ''; imagesList.innerHTML = ''; songsList.innerHTML = '';
+                
+                // Tam 24 saatin milisaniye karşılığı
+                const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+                const now = Date.now();
 
                 snapshot.forEach((docSnap) => {
                     const item = docSnap.data();
                     const id = docSnap.id;
                     const deleteBtn = isAdmin ? `<button onclick="deleteFile('${id}')" class="absolute -top-2 -right-2 bg-white bg-opacity-90 rounded-full w-8 h-8 flex items-center justify-center text-gray-500 hover:text-red-500 transition shadow-md border border-pink-200 z-20">🗑️</button>` : '';
 
-                    if(item.type === 'note') {
+                    if(item.type === 'news') {
+                        // 24 SAAT KURALI UYGULAMASI (Mesaj 24 saatten eskiyse yoksayılır, hiç görünmez)
+                        if (now - item.timestamp <= TWENTY_FOUR_HOURS) {
+                            if(!latestNews || item.timestamp > latestNews.timestamp) {
+                                latestNews = { ...item, id };
+                            }
+                        }
+                    } else if(item.type === 'note') {
+                        hasNotes = true;
                         notesList.innerHTML += `
                             <div class="glass-panel p-5 relative">
                                 ${deleteBtn}
@@ -479,6 +482,7 @@
                             </div>
                         `;
                     } else if (item.type === 'image') {
+                        hasImages = true;
                         imagesList.innerHTML += `
                             <div class="glass-panel p-5 relative">
                                 ${deleteBtn}
@@ -495,14 +499,10 @@
                             </div>
                         `;
                     } else if (item.type === 'song') {
-                        let songLink = "";
-                        const inputText = item.songName.trim();
-                        
-                        if(inputText.startsWith("http") || inputText.startsWith("www")) {
-                            songLink = inputText.startsWith("www") ? "https://" + inputText : inputText;
-                        } else {
-                            songLink = `https://www.youtube.com/results?search_query=${encodeURIComponent(inputText)}`;
-                        }
+                        hasSongs = true;
+                        let songLink = inputText = item.songName.trim();
+                        if(inputText.startsWith("http") || inputText.startsWith("www")) { songLink = inputText.startsWith("www") ? "https://" + inputText : inputText; } 
+                        else { songLink = `https://www.youtube.com/results?search_query=${encodeURIComponent(inputText)}`; }
 
                         songsList.innerHTML += `
                             <div class="glass-panel p-3 md:p-4 relative flex items-center gap-2 md:gap-3 border border-pink-200 hover:shadow-lg transition group">
@@ -512,13 +512,32 @@
                                     <h3 class="font-bold text-gray-800 truncate" title="${item.songName}">${item.songName}</h3>
                                     <p class="text-xs text-pink-500 mt-1 truncate" title="Armağan eden: ${item.sender}">Armağan eden: ${item.sender}</p>
                                 </div>
-                                <a href="${songLink}" target="_blank" class="shrink-0 px-3 py-1.5 md:px-4 md:py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-full text-xs md:text-sm font-semibold shadow-md transition flex items-center gap-1 md:gap-2">
-                                    ▶️ Aç
-                                </a>
+                                <a href="${songLink}" target="_blank" class="shrink-0 px-3 py-1.5 md:px-4 md:py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-full text-xs md:text-sm font-semibold shadow-md transition flex items-center gap-1 md:gap-2">▶️ Aç</a>
                             </div>
                         `;
                     }
                 });
+
+                if(!hasNotes) notesList.innerHTML = '<p class="text-center text-pink-500 font-medium">Henüz hiç gizli not eklenmemiş.</p>';
+                if(!hasImages) imagesList.innerHTML = '<p class="text-center text-pink-500 font-medium col-span-2">Henüz hiç gizli resim eklenmemiş.</p>';
+                if(!hasSongs) songsList.innerHTML = '<p class="text-center text-pink-500 font-medium">Henüz şarkı eklenmemiş. İlk şarkıyı sen ekle!</p>';
+
+                // HABER KUTUSUNU YÖNET
+                const newsContainer = document.getElementById('news-container');
+                if(latestNews) {
+                    newsContainer.classList.remove('hidden-element'); // Zarf container'ını göster
+                    document.getElementById('news-closed').classList.remove('hidden-element'); // Kapalı zarfı göster
+                    document.getElementById('news-opened').classList.add('hidden-element'); // Mesajı gizle (tıklayana kadar)
+                    document.getElementById('news-text').innerText = latestNews.content;
+                    
+                    if(isAdmin) {
+                        document.getElementById('news-delete-container').innerHTML = `<button onclick="deleteFile('${latestNews.id}')" class="bg-white bg-opacity-90 rounded-full w-8 h-8 flex items-center justify-center text-gray-500 hover:text-red-500 transition shadow-md border border-pink-200 mt-2 md:mt-0">🗑️</button>`;
+                    } else {
+                        document.getElementById('news-delete-container').innerHTML = '';
+                    }
+                } else {
+                    newsContainer.classList.add('hidden-element'); // Hiç haber yoksa (veya süresi dolduysa) gizle
+                }
             });
         }
 

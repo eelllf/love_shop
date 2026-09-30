@@ -112,6 +112,23 @@
                 </div>
             </div>
 
+            <!-- ADMİN: GELEN MESAJLAR KUTUSU -->
+            <div id="admin-inbox-panel" class="glass-panel p-5 mb-6 hidden-element border-2 border-pink-500 mx-auto max-w-full">
+                <h2 class="text-lg font-bold text-pink-700 mb-3 text-center">📬 SANA GELEN GİZLİ MESAJLAR</h2>
+                <p class="text-xs text-gray-500 text-center mb-3">Bu mesajları sadece sen görebilirsin.</p>
+                <div id="inbox-list" class="max-h-60 overflow-y-auto space-y-3 p-2 bg-white bg-opacity-50 rounded-lg shadow-inner">
+                    <p class="text-center text-pink-400">Gelen kutun boş...</p>
+                </div>
+            </div>
+
+            <!-- ADMİN: ZİYARETÇİ KAYITLARI PANeli -->
+            <div id="admin-logs-panel" class="glass-panel p-5 mb-6 hidden-element border-2 border-pink-500 mx-auto max-w-full">
+                <h2 class="text-lg font-bold text-pink-700 mb-3 text-center">👁️‍🗨️ GİZLİ GİRİŞ KAYITLARI</h2>
+                <div id="logs-list" class="max-h-40 overflow-y-auto space-y-2 text-sm font-medium text-gray-700 p-2 bg-white bg-opacity-50 rounded-lg shadow-inner">
+                    <p class="text-center text-pink-400">Giriş kaydı bekleniyor...</p>
+                </div>
+            </div>
+
             <!-- ADMİN: HABER GÜNCELLEME PANELİ -->
             <div id="admin-news-panel" class="glass-panel p-5 mb-6 hidden-element border-2 border-pink-500 mx-auto max-w-full">
                 <h2 class="text-lg font-bold text-pink-700 mb-3 text-center">📢 GÜNÜN MESAJINI YAYINLA (24 Saatte Silinir)</h2>
@@ -196,6 +213,17 @@
                 </div>
                 <div id="songs-list" class="space-y-3"></div>
             </div>
+
+            <!-- KULLANICILARIN ADMİNE GİZLİ MESAJ BIRAKMA KUTUSU -->
+            <div class="glass-panel p-6 mt-10 mx-auto max-w-full border-2 border-pink-300 bg-pink-50 bg-opacity-50">
+                <h3 class="text-lg font-bold text-pink-600 mb-1 text-center">💌 Bana Gizli Bir Not Bırak</h3>
+                <p class="text-xs text-gray-500 text-center mb-4">Buraya yazdığın mesajları sitedeki kimse göremez, doğrudan bana ulaşır.</p>
+                <textarea id="private-message-input" class="w-full p-3 border border-pink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400 bg-white bg-opacity-80 mb-3" rows="3" placeholder="İçinden geçenleri yaz..."></textarea>
+                <button onclick="sendPrivateMessage()" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 rounded-xl transition shadow-md">
+                    Gizlice Gönder 🤫
+                </button>
+            </div>
+
         </div>
     </div>
 
@@ -203,7 +231,8 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // SENİN KENDİ FIREBASE KİMLİĞİN
+        // =====================================================================
+        // 🚨 DİKKAT: KENDİ FIREBASE BİLGİLERİNİ BURAYA YAPIŞTIRMAYI UNUTMA! 🚨
         const firebaseConfig = {
             apiKey: "AIzaSyDasi6Ojoxr_-6pKumuJToJVK1C6O5OAmM",
             authDomain: "lovve-21f32.firebaseapp.com",
@@ -213,6 +242,7 @@
             appId: "1:911938070590:web:b03b452e3cbf06a447896f",
             measurementId: "G-0TE68RWG53"
         };
+        // =====================================================================
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -248,6 +278,16 @@
             }, 1000);
         }
 
+        // --- GÜNCELLENMİŞ: SAYFA KAPANIP AÇILINCA KAYIT ATAN SİSTEM ---
+        window.logVisit = async () => {
+            // Sekme yenilendiğinde kayıt atmaz, ancak sekme tamamen kapatılıp tekrar açıldığında yeni kayıt atar.
+            if(sessionStorage.getItem('visited_this_session')) return;
+            try {
+                await addDoc(collection(db, "loveshop_data"), { type: 'visit_log', timestamp: Date.now() });
+                sessionStorage.setItem('visited_this_session', 'true');
+            } catch(e) { console.error("Kayıt hatası", e); }
+        };
+
         // --- GİRİŞ KONTROLÜ ---
         window.checkDate = () => {
             const userInput = document.getElementById('secret-date-input').value.trim();
@@ -257,6 +297,7 @@
                 document.getElementById('main-content').classList.remove('hidden-element');
                 triggerMassiveHeartConfetti(); 
                 startLoveCounter(); 
+                logVisit(); 
             } else {
                 document.getElementById('entrance-error').classList.remove('hidden-element');
             }
@@ -325,6 +366,8 @@
                 const pwd = prompt("Admin Şifresini Girin:");
                 if(pwd === "efsunlu") { 
                     isAdmin = true;
+                    document.getElementById('admin-inbox-panel').classList.remove('hidden-element');
+                    document.getElementById('admin-logs-panel').classList.remove('hidden-element'); 
                     document.getElementById('admin-news-panel').classList.remove('hidden-element');
                     document.getElementById('admin-note-panel').classList.remove('hidden-element');
                     document.getElementById('admin-image-panel').classList.remove('hidden-element');
@@ -335,6 +378,17 @@
                 }
                 clickCount = 0;
             }
+        };
+
+        // --- KULLANICININ ADMİNE MESAJ GÖNDERMESİ ---
+        window.sendPrivateMessage = async () => {
+            const msgText = document.getElementById('private-message-input').value.trim();
+            if(!msgText) return alert("Lütfen bir şeyler yaz!");
+            try {
+                await addDoc(collection(db, "loveshop_data"), { type: 'private_message', content: msgText, timestamp: Date.now() });
+                alert("Mesajın başarıyla bana iletildi! 💖");
+                document.getElementById('private-message-input').value = '';
+            } catch (e) { alert("Mesaj gönderilirken hata oluştu."); }
         };
 
         // --- HABER/MESAJ YAYINLAMA ---
@@ -437,7 +491,6 @@
 
         let currentSnapshot = null;
         function loadDataFromFirebase() {
-            // YENİ: Hata veren orderBy kısmını sildik, JavaScript ile sıralayacağız
             const q = query(collection(db, "loveshop_data"));
             if(currentSnapshot) currentSnapshot(); 
             
@@ -445,24 +498,25 @@
                 const notesList = document.getElementById('notes-list');
                 const imagesList = document.getElementById('images-list');
                 const songsList = document.getElementById('songs-list');
+                const logsList = document.getElementById('logs-list');
+                const inboxList = document.getElementById('inbox-list');
                 
                 let latestNews = null;
                 let hasNotes = false;
                 let hasImages = false;
                 let hasSongs = false;
+                let hasLogs = false;
+                let hasInbox = false;
                 
                 notesList.innerHTML = ''; imagesList.innerHTML = ''; songsList.innerHTML = '';
+                if(isAdmin) { logsList.innerHTML = ''; inboxList.innerHTML = ''; }
                 
                 const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
                 const now = Date.now();
 
-                // Verileri önce bir diziye alıp sonra sıraya sokuyoruz
                 let allItems = [];
-                snapshot.forEach((docSnap) => {
-                    allItems.push({ id: docSnap.id, ...docSnap.data() });
-                });
+                snapshot.forEach((docSnap) => { allItems.push({ id: docSnap.id, ...docSnap.data() }); });
 
-                // Zaman damgası olmayan eski verileri kaybetmemek için Javascript ile sıralama
                 allItems.sort((a, b) => {
                     const timeA = a.timestamp || 0;
                     const timeB = b.timestamp || 0;
@@ -471,13 +525,31 @@
 
                 allItems.forEach((item) => {
                     const id = item.id;
-                    const deleteBtn = isAdmin ? `<button onclick="deleteFile('${id}')" class="absolute -top-2 -right-2 bg-white bg-opacity-90 rounded-full w-8 h-8 flex items-center justify-center text-gray-500 hover:text-red-500 transition shadow-md border border-pink-200 z-20">🗑️</button>` : '';
+                    const deleteBtn = isAdmin ? `<button onclick="deleteFile('${id}')" class="absolute top-2 right-2 bg-white bg-opacity-90 rounded-full w-8 h-8 flex items-center justify-center text-gray-500 hover:text-red-500 transition shadow-md border border-pink-200 z-20">🗑️</button>` : '';
 
-                    if(item.type === 'news') {
+                    if(item.type === 'visit_log') {
+                        if(isAdmin) {
+                            hasLogs = true;
+                            const dateObj = new Date(item.timestamp);
+                            const dateStr = dateObj.toLocaleDateString('tr-TR') + " - Saat: " + dateObj.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'});
+                            logsList.innerHTML += `<div class="bg-white bg-opacity-80 p-2 rounded-lg border-l-4 border-pink-400 mb-1">🕵️ Giriş: <span class="text-pink-600 font-bold">${dateStr}</span></div>`;
+                        }
+                    } else if(item.type === 'private_message') {
+                        if(isAdmin) {
+                            hasInbox = true;
+                            const dateObj = new Date(item.timestamp);
+                            const dateStr = dateObj.toLocaleDateString('tr-TR') + " " + dateObj.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'});
+                            inboxList.innerHTML += `
+                                <div class="bg-white bg-opacity-80 p-4 rounded-xl border-l-4 border-pink-500 relative shadow-sm">
+                                    ${deleteBtn}
+                                    <p class="text-xs text-gray-400 mb-1">${dateStr}</p>
+                                    <p class="text-gray-800 font-medium whitespace-pre-wrap pr-8">${item.content}</p>
+                                </div>
+                            `;
+                        }
+                    } else if(item.type === 'news') {
                         if (now - item.timestamp <= TWENTY_FOUR_HOURS) {
-                            if(!latestNews || item.timestamp > latestNews.timestamp) {
-                                latestNews = { ...item, id };
-                            }
+                            if(!latestNews || item.timestamp > latestNews.timestamp) { latestNews = { ...item, id }; }
                         }
                     } else if(item.type === 'note') {
                         hasNotes = true;
@@ -533,6 +605,9 @@
                 if(!hasNotes) notesList.innerHTML = '<p class="text-center text-pink-500 font-medium">Henüz hiç gizli not eklenmemiş.</p>';
                 if(!hasImages) imagesList.innerHTML = '<p class="text-center text-pink-500 font-medium col-span-2">Henüz hiç gizli resim eklenmemiş.</p>';
                 if(!hasSongs) songsList.innerHTML = '<p class="text-center text-pink-500 font-medium">Henüz şarkı eklenmemiş. İlk şarkıyı sen ekle!</p>';
+                
+                if(isAdmin && !hasLogs) logsList.innerHTML = '<p class="text-center text-pink-400">Henüz kaydedilen bir giriş yok.</p>';
+                if(isAdmin && !hasInbox) inboxList.innerHTML = '<p class="text-center text-pink-400">Gelen kutun boş, henüz bir mesaj yok.</p>';
 
                 // HABER KUTUSUNU YÖNET
                 const newsContainer = document.getElementById('news-container');

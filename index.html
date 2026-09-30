@@ -232,7 +232,7 @@
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         // =====================================================================
-        // 🚨 DİKKAT: KENDİ FIREBASE BİLGİLERİNİ BURAYA YAPIŞTIRMAYI UNUTMA! 🚨
+        // 🔥 SENİN FIREBASE BİLGİLERİN (Hazır Gömülü, Dokunma!) 🔥
         const firebaseConfig = {
             apiKey: "AIzaSyDasi6Ojoxr_-6pKumuJToJVK1C6O5OAmM",
             authDomain: "lovve-21f32.firebaseapp.com",
@@ -278,26 +278,37 @@
             }, 1000);
         }
 
-        // --- GÜNCELLENMİŞ: SAYFA KAPANIP AÇILINCA KAYIT ATAN SİSTEM ---
-        window.logVisit = async () => {
-            // Sekme yenilendiğinde kayıt atmaz, ancak sekme tamamen kapatılıp tekrar açıldığında yeni kayıt atar.
+        // --- İSİMLİ GİRİŞ KAYIT SİSTEMİ ---
+        window.logVisit = async (visitorName) => {
             if(sessionStorage.getItem('visited_this_session')) return;
             try {
-                await addDoc(collection(db, "loveshop_data"), { type: 'visit_log', timestamp: Date.now() });
+                await addDoc(collection(db, "loveshop_data"), { 
+                    type: 'visit_log', 
+                    visitorName: visitorName, // Yeni eklenen isim alanı
+                    timestamp: Date.now() 
+                });
                 sessionStorage.setItem('visited_this_session', 'true');
             } catch(e) { console.error("Kayıt hatası", e); }
         };
 
-        // --- GİRİŞ KONTROLÜ ---
+        // --- GİRİŞ KONTROLÜ VE İSİM SORMA ---
         window.checkDate = () => {
             const userInput = document.getElementById('secret-date-input').value.trim();
             const correctDate = "23/08/2026"; 
             if(userInput === correctDate) {
+                // İsim sorma veya hafızadan alma bölümü
+                let vName = localStorage.getItem('loveshop_visitor_name');
+                if(!vName) {
+                    vName = prompt("Siteye hoş geldin! Lütfen adını yazar mısın? 💖\n(Bu sadece ilk girişte sorulur)");
+                    if(!vName || vName.trim() === "") vName = "Gizemli Ziyaretçi";
+                    localStorage.setItem('loveshop_visitor_name', vName.trim());
+                }
+
                 document.getElementById('entrance-screen').classList.add('hidden-element');
                 document.getElementById('main-content').classList.remove('hidden-element');
                 triggerMassiveHeartConfetti(); 
                 startLoveCounter(); 
-                logVisit(); 
+                logVisit(vName); // İsmi log sistemine gönderiyoruz
             } else {
                 document.getElementById('entrance-error').classList.remove('hidden-element');
             }
@@ -532,7 +543,9 @@
                             hasLogs = true;
                             const dateObj = new Date(item.timestamp);
                             const dateStr = dateObj.toLocaleDateString('tr-TR') + " - Saat: " + dateObj.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'});
-                            logsList.innerHTML += `<div class="bg-white bg-opacity-80 p-2 rounded-lg border-l-4 border-pink-400 mb-1">🕵️ Giriş: <span class="text-pink-600 font-bold">${dateStr}</span></div>`;
+                            // YENİ: Giriş Yapan Kişinin İsmini Gösterme
+                            const vName = item.visitorName ? item.visitorName : "Birisi";
+                            logsList.innerHTML += `<div class="bg-white bg-opacity-80 p-2 rounded-lg border-l-4 border-pink-400 mb-1">🕵️ <span class="text-pink-600 font-bold">${vName}</span> giriş yaptı. <br><span class="text-xs text-gray-500">${dateStr}</span></div>`;
                         }
                     } else if(item.type === 'private_message') {
                         if(isAdmin) {
